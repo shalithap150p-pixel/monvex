@@ -11,6 +11,8 @@ export default defineConfig({
     tailwindcss(),
     VitePWA({
       registerType: 'autoUpdate',
+      injectRegister: false,
+      workbox: { skipWaiting: true, clientsClaim: true, cleanupOutdatedCaches: true },
       includeAssets: ['favicon.ico', 'favicon.png', 'apple-touch-icon.png', 'icon-192.png', 'icon-512.png', 'icon-maskable-512.png', 'brand/*.png'],
       manifest: {
         name: 'MONVEX — Master Your Money',
