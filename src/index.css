@@ -295,3 +295,40 @@ body {
 .sheet-in {
   animation: sheet-in 0.18s ease-out;
 }
+
+/* ------------------------------------------------------------------ */
+/* Print / "Save as PDF": light palette, no app chrome.                 */
+/* ------------------------------------------------------------------ */
+@media print {
+  :root,
+  :root[data-theme='navy'],
+  :root[data-theme='noir'] {
+    --bg: #ffffff;
+    --surface: #ffffff;
+    --surface-2: #f1f5f9;
+    --border: #cbd5e1;
+    --border-strong: #64748b;
+    --text: #0f172a;
+    --text-muted: #334155;
+    --text-subtle: #475569;
+    --accent: #1d4ed8;
+    --accent-text: #1d4ed8;
+    --positive: #15803d;
+    --negative: #b91c1c;
+    --warning: #b45309;
+    --info: #1d4ed8;
+    color-scheme: light;
+  }
+  body {
+    background: #ffffff;
+  }
+  aside,
+  header.sticky,
+  nav[aria-label='Primary mobile'],
+  .no-print {
+    display: none !important;
+  }
+  .card {
+    break-inside: avoid;
+  }
+}

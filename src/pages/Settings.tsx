@@ -13,6 +13,7 @@ import type { Frequency, TransactionType } from '../domain/types'
 import { liveQuery } from 'dexie'
 import { useConfirm } from '../ui/Confirm'
 import { AmountField, CheckboxField, InlineNote, PageHeader, SelectField, StatusBadge, TextField } from '../ui/Primitives'
+import { CompanyCredit, CompanyWordmark } from '../ui/Company'
 import { useToast } from '../ui/Toast'
 import { parseField } from '../forms/shared'
 import type { QueuedOp } from '../data/db'
@@ -34,6 +35,7 @@ export default function Settings() {
         <SyncSection />
         <DataSection />
         <AccountSection />
+        <AboutSection />
       </div>
     </>
   )
@@ -369,6 +371,26 @@ function AccountSection() {
           <button type="button" className="btn btn-secondary" onClick={() => void signOut()}><LogOut className="size-4" aria-hidden /> Sign out</button>
         </>
       )}
+    </section>
+  )
+}
+
+/* ------------------------------------------------------------------ about */
+
+function AboutSection() {
+  return (
+    <section className={SECTION} id="about" aria-labelledby="ab-title">
+      <h2 id="ab-title" className="t-section mb-3">About</h2>
+      <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div>
+          <p className="font-semibold">MONVEX — Master Your Money</p>
+          <p className="t-helper">Plan · Track · Grow. Your records stay private to you; MONVEX never pays anything on your behalf and never asks for bank passwords, PINs or OTPs.</p>
+        </div>
+        <div className="flex flex-col items-center gap-3">
+          <CompanyWordmark height={36} />
+          <CompanyCredit />
+        </div>
+      </div>
     </section>
   )
 }

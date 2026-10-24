@@ -1,4 +1,4 @@
-import { Lightbulb } from 'lucide-react'
+import { Lightbulb, Printer } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useApp } from '../app/AppContext'
@@ -9,6 +9,7 @@ import { addDays, addMonths, diffDays, monthEnd, monthKey, monthStart } from '..
 import { advanceOutstanding, debtOutstanding, monthTotals, receivableOutstanding } from '../domain/ledger'
 import { formatMoney, sum } from '../domain/money'
 import { CategoryBreakdownChart } from '../ui/Charts'
+import { CompanyCredit } from '../ui/Company'
 import { SelectField } from '../ui/Primitives'
 import { CurrencyAmount, InlineNote, PageHeader, StatusBadge, type Tone } from '../ui/Primitives'
 
@@ -127,7 +128,23 @@ export default function Reports() {
 
   return (
     <>
-      <PageHeader title="Reports" description="Understand where your money goes. Income and expenses exclude transfers, loans, advances, opening balances and money held for others." />
+      <div className="mb-4 hidden items-center justify-between gap-4 border-b border-border pb-3 print:flex">
+        <img src="/brand/levelup-wordmark.png" alt="LevelUP" style={{ height: 32, width: 'auto' }} />
+        <div className="text-right text-sm">
+          <strong>MONVEX — Financial report</strong>
+          <br />
+          {month} · generated {today}
+        </div>
+      </div>
+      <PageHeader
+        title="Reports"
+        description="Understand where your money goes. Income and expenses exclude transfers, loans, advances, opening balances and money held for others."
+        actions={
+          <button type="button" className="btn btn-secondary no-print" onClick={() => window.print()}>
+            <Printer className="size-4" aria-hidden /> Print / Save as PDF
+          </button>
+        }
+      />
 
       <div className="mb-4 max-w-xs">
         <SelectField label="Month" value={month} onChange={(e) => setMonth(e.target.value)}>
@@ -277,6 +294,9 @@ export default function Reports() {
         </section>
       </div>
       <p className="t-helper mt-4">Period shown: {monthStart(month)} to {monthEnd(month)}. Forecast-accuracy tracking needs saved forecast snapshots, which are not available in this version.</p>
+      <div className="mt-6 hidden print:block">
+        <CompanyCredit />
+      </div>
     </>
   )
 }
