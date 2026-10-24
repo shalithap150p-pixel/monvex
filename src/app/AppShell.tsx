@@ -1,9 +1,10 @@
 import { LogOut, Menu, PanelLeftClose, PanelLeftOpen, Plus } from 'lucide-react'
-import { useEffect, useState, type ReactNode } from 'react'
+import { Suspense, useEffect, useState, type ReactNode } from 'react'
 import { Link, NavLink, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { formatMoney } from '../domain/money'
 import { availableMoney } from '../domain/ledger'
 import { Modal } from '../ui/Modal'
+import { LoadingState } from '../ui/States'
 import { useApp } from './AppContext'
 import { useAuth } from './auth'
 import { Logo } from './Brand'
@@ -61,7 +62,9 @@ function Shell() {
       <div className="flex min-w-0 flex-1 flex-col">
         <TopBar onMore={() => setMoreOpen(true)} />
         <main id="main" tabIndex={-1} className="mx-auto w-full max-w-[1200px] flex-1 px-4 pb-28 pt-5 outline-none sm:px-6 lg:px-8 lg:pb-10">
-          <Outlet />
+          <Suspense fallback={<LoadingState label="Loading…" />}>
+            <Outlet />
+          </Suspense>
         </main>
         <MobileBottomNav onMore={() => setMoreOpen(true)} />
       </div>

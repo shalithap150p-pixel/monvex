@@ -1,5 +1,6 @@
 import { FlaskConical, ShieldCheck } from 'lucide-react'
 import { useState, type FormEvent } from 'react'
+import { CompanyCredit } from '../ui/Company'
 import { InlineNote, TextField } from '../ui/Primitives'
 import { useAuth } from './auth'
 import { Logo } from './Brand'
@@ -17,6 +18,9 @@ function Frame({ children }: { children: React.ReactNode }) {
           <ShieldCheck className="mt-0.5 size-4 shrink-0" aria-hidden />
           MONVEX never asks for bank passwords, PINs or OTPs.
         </p>
+        <div className="mt-8">
+          <CompanyCredit withMark />
+        </div>
       </div>
     </div>
   )

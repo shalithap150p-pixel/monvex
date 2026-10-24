@@ -1,4 +1,4 @@
-import { lazy, Suspense } from 'react'
+import { lazy } from 'react'
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
 import { DataProvider } from './app/AppContext'
 import { AppShell } from './app/AppShell'
@@ -43,8 +43,7 @@ function Gate() {
 function Routed() {
   return (
     <BrowserRouter>
-      <Suspense fallback={<LoadingState fullScreen />}>
-        <Routes>
+      <Routes>
           <Route element={<AppShell />}>
             <Route index element={<Dashboard />} />
             <Route path="transactions" element={<Transactions />} />
@@ -60,8 +59,7 @@ function Routed() {
             <Route path="settings" element={<Settings />} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Route>
-        </Routes>
-      </Suspense>
+      </Routes>
     </BrowserRouter>
   )
 }
