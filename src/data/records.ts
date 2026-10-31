@@ -1,5 +1,6 @@
 import type {
   Account,
+  BankDetails,
   Budget,
   Category,
   InternalTransfer,
@@ -87,6 +88,7 @@ export type AdvanceRec = SalaryAdvance & Synced
 export type ObligationRec = PaymentObligation & Synced
 export type OccurrenceRec = Omit<PaymentOccurrence, 'paidAmount' | 'paidTransactionIds'> & Synced & { currency: string }
 export type BudgetRec = Budget & Synced
+export type BankDetailsRec = BankDetails & Synced
 export type GoalRec = Omit<SavingsGoal, 'allocated' | 'contributions'> & Synced
 
 export interface EntityMap {
@@ -108,6 +110,7 @@ export interface EntityMap {
   goals: GoalRec
   allocations: SavingsAllocationRec
   reconciliations: ReconciliationRec
+  bankDetails: BankDetailsRec
 }
 
 export type EntityName = keyof EntityMap

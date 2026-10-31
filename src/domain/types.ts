@@ -21,6 +21,34 @@ export interface Account extends BaseRecord {
   archived: boolean
 }
 
+export type BankAccountType = 'savings' | 'current' | 'fixed_deposit' | 'foreign_currency' | 'other'
+
+/**
+ * The user's own bank account information, kept for reference.
+ * It never holds online-banking passwords, PINs, OTPs, CVV/CVC or full card numbers (only the last four digits).
+ */
+export interface BankDetails extends BaseRecord {
+  /** Nickname, e.g. "Salary account". */
+  label: string
+  bankName: string
+  branchName?: string | null
+  branchCode?: string | null
+  bankCode?: string | null
+  accountHolder?: string | null
+  accountNumber: string
+  accountType: BankAccountType
+  currency: string
+  iban?: string | null
+  swiftBic?: string | null
+  /** Last four digits of the debit/credit card only. */
+  cardLast4?: string | null
+  openedOn?: ISODate | null
+  contactPhone?: string | null
+  /** Optional link to the MONVEX account that tracks this bank account's balance. */
+  linkedAccountId?: string | null
+  notes?: string | null
+}
+
 export type TransactionType = 'income' | 'expense'
 
 export interface PayrollDeduction {

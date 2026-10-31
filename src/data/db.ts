@@ -63,6 +63,8 @@ export const dbName = (scope: Scope) => `monvex-${scope}`
 export function openDb(scope: Scope): MonvexDB {
   const db = new Dexie(dbName(scope)) as MonvexDB
   db.version(1).stores(STORES)
+  // v2: bank details (reference information, not part of any calculation)
+  db.version(2).stores({ bankDetails: 'id, linkedAccountId' })
   return db
 }
 

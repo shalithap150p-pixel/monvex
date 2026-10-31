@@ -188,6 +188,8 @@ async function pull(db: MonvexDB, client: SupabaseClient): Promise<void> {
     }
   }
 
+  // One table failing (for example a database update that has not been run yet) must not stop the others.
+  let firstError: string | null = null
   for (const entity of ENTITY_ORDER) {
     const cfg = ENTITIES[entity]
     let cursor = ((await db.meta.get(`lastPull:${entity}`))?.value as string | undefined) ?? null
@@ -195,7 +197,13 @@ async function pull(db: MonvexDB, client: SupabaseClient): Promise<void> {
       let query = client.from(cfg.table).select('*').order('updated_at', { ascending: true }).limit(PAGE)
       if (cursor) query = query.gt('updated_at', cursor)
       const { data, error } = await query
-      if (error) throw new Error(error.message)
+      if (error) {
+        if (isNetworkError(error.message)) throw new Error(error.message)
+        firstError ??= /does not exist|schema cache|could not find/i.test(error.message)
+          ? `The server is missing a database update (table "${cfg.table}"). Run the latest file in supabase/migrations in the Supabase SQL editor.`
+          : error.message
+        break
+      }
       if (!data || data.length === 0) break
       await mergeRows(db, entity, data as Record<string, unknown>[])
       cursor = data[data.length - 1].updated_at as string
@@ -203,6 +211,7 @@ async function pull(db: MonvexDB, client: SupabaseClient): Promise<void> {
       if (data.length < PAGE) break
     }
   }
+  if (firstError) throw new Error(firstError)
 }
 
 async function mergeRows(db: MonvexDB, entity: EntityName, rows: Record<string, unknown>[]): Promise<void> {

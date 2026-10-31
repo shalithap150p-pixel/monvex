@@ -69,6 +69,9 @@ export async function seedDemoData(db: MonvexDB, today: ISODate): Promise<void> 
   await txn(2, 'expense', cash, 3_600_00, 'Groceries', 'Food & Dining')
   await txn(1, 'expense', bank, 5_500_00, 'Books and stationery', 'Education')
 
+  // Clearly fake sample so the Bank Details page is not empty in the demo.
+  await put('bankDetails', { id: newId(), label: 'Main account (sample)', bankName: 'Sample Bank PLC', branchName: 'Colombo Fort', branchCode: '001', bankCode: '7000', accountHolder: 'Demo User', accountNumber: '0000 1234 5678', accountType: 'savings', currency: 'LKR', swiftBic: 'SAMPLKLX', cardLast4: '4242', linkedAccountId: bank, notes: 'Demo data — not a real account.' })
+
   const rent = newId()
   const internet = newId()
   const insurance = newId()

@@ -10,6 +10,7 @@ import { LoadingState } from './ui/States'
 const Dashboard = lazy(() => import('./pages/Dashboard'))
 const Transactions = lazy(() => import('./pages/Transactions'))
 const Accounts = lazy(() => import('./pages/Accounts'))
+const BankDetails = lazy(() => import('./pages/BankDetails'))
 const Transfers = lazy(() => import('./pages/Transfers'))
 const Bills = lazy(() => import('./pages/Bills'))
 const Debts = lazy(() => import('./pages/Debts'))
@@ -48,6 +49,7 @@ function Routed() {
             <Route index element={<Dashboard />} />
             <Route path="transactions" element={<Transactions />} />
             <Route path="accounts" element={<Accounts />} />
+            <Route path="bank-details" element={<BankDetails />} />
             <Route path="transfers" element={<Transfers />} />
             <Route path="bills" element={<Bills />} />
             <Route path="debts" element={<Debts />} />

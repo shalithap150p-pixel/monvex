@@ -1,5 +1,6 @@
 import { sum } from '../domain/money'
 import type {
+  BankDetails,
   Budget,
   Category,
   LedgerData,
@@ -30,6 +31,7 @@ export const ALL_ENTITIES: EntityName[] = [
   'goals',
   'allocations',
   'reconciliations',
+  'bankDetails',
 ]
 
 export interface AppData {
@@ -40,6 +42,7 @@ export interface AppData {
   budgets: Budget[]
   goals: SavingsGoal[]
   reconciliations: ReconciliationRec[]
+  bankDetails: BankDetails[]
   prefs: Awaited<ReturnType<typeof readPrefs>>
 }
 
@@ -158,6 +161,7 @@ export function assemble(raw: { [K in EntityName]: EntityMap[K][] }, prefs: AppD
     budgets: alive(raw.budgets),
     goals,
     reconciliations: alive(raw.reconciliations),
+    bankDetails: alive(raw.bankDetails),
     prefs,
   }
 }

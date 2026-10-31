@@ -167,6 +167,29 @@ describe('Supabase migrations', () => {
     })
   })
 
+  it('keeps bank details private, valid and out of the audit log', async () => {
+    const id = '77777777-7777-7777-7777-777777777777'
+    const rec = { id, label: 'Salary', bank_name: 'Sample Bank', account_number: '0000 1111 2222', account_type: 'savings', currency: 'LKR', card_last4: '1234', deleted_at: null }
+    await as(A, async () => {
+      const r = await db.query<{ r: { status: string } }>(`select public.sync_apply(gen_random_uuid(), 'bank_account_details', 'upsert', $1, null, $2::jsonb) as r`, [id, JSON.stringify(rec)])
+      expect(r.rows[0].r.status).toBe('applied')
+      expect((await db.query('select * from public.bank_account_details')).rows).toHaveLength(1)
+      // a full card number (or anything but 4 digits) is refused by the database itself
+      const bad = '88888888-8888-8888-8888-888888888888'
+      expect(await fails(`select public.sync_apply(gen_random_uuid(), 'bank_account_details', 'upsert', $1, null, $2::jsonb)`, [bad, JSON.stringify({ ...rec, id: bad, card_last4: '4242424242424242' })])).toMatch(/check|violat/i)
+      expect(await fails(`select public.sync_apply(gen_random_uuid(), 'bank_account_details', 'upsert', $1, null, $2::jsonb)`, [bad, JSON.stringify({ ...rec, id: bad, account_type: 'wallet' })])).toMatch(/check|violat/i)
+    })
+    await as(B, async () => {
+      expect((await db.query('select * from public.bank_account_details')).rows).toHaveLength(0)
+    })
+    await as(null, async () => {
+      expect(await fails('select * from public.bank_account_details')).toMatch(/permission denied/)
+    })
+    // account numbers are not copied into the audit log
+    const audited = await db.query<{ n: number }>(`select count(*)::int as n from public.audit_log where table_name = 'bank_account_details'`)
+    expect(audited.rows[0].n).toBe(0)
+  })
+
   it('keeps the audit log read-only for users', async () => {
     await as(A, async () => {
       const rows = await db.query('select * from public.audit_log')

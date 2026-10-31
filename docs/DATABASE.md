@@ -43,6 +43,18 @@ Additive, optional columns only — existing rows keep working:
 
 Run `0005` in the SQL editor **before** using the new fields: `sync_apply` ignores unknown columns, so values saved earlier would not reach the server (and a later pull would overwrite them locally).
 
+## Bank details (migration `0006`)
+
+`bank_account_details` stores reference information about the user's real bank accounts (bank, branch, holder, account number, optional IBAN/SWIFT, card **last 4 digits**, contact phone, notes). It is **not** a ledger table and never affects balances or Safe-to-Spend.
+
+- Owner-only RLS (forced), `anon` has no access, soft delete like other synced tables.
+- Check constraints: `card_last4` must be exactly 4 digits and `account_type` one of `savings | current | fixed_deposit | foreign_currency | other`, so a full card number cannot be saved.
+- Deliberately **not** in `audit_log`, so account numbers are not duplicated there.
+- MONVEX never stores online-banking passwords, PINs, OTPs, CVV/CVC or full card numbers; the form warns and the notes/labels are checked for such words.
+- Optional `linked_account_id` points at a MONVEX account so the page can show its current balance.
+
+Run `0006` **before** adding bank details: until the table exists the push fails (and is retried) and sync of the other tables still works.
+
 ### How the flexible pool is calculated (`src/domain/safeToSpend.ts`)
 
 ```

@@ -36,6 +36,7 @@ const SAMPLES: Record<EntityName, Record<string, unknown>> = {
   goals: { id: ID, currency: 'LKR', name: 'Trip', target: 10000000, targetDate: null, accountId: null, reserveInSafeToSpend: false, priority: 'high', monthlyContribution: 400000 },
   allocations: { id: ID, goalId: ID, accountId: null, amount: 1000, date: D, note: null, currency: 'LKR' },
   reconciliations: { id: ID, accountId: ID, statementBalance: 1000, appBalance: 900, date: D, notes: null, currency: 'LKR' },
+  bankDetails: { id: ID, label: 'Salary account', bankName: 'Sample Bank', branchName: 'Colombo', branchCode: '001', bankCode: '7010', accountHolder: 'A. Person', accountNumber: '0000 1111 2222', accountType: 'savings', currency: 'LKR', iban: null, swiftBic: 'SAMPLKLX', cardLast4: '1234', openedOn: D, contactPhone: '0112000000', linkedAccountId: ID, notes: null },
 }
 
 beforeAll(async () => {

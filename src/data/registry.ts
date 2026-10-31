@@ -43,6 +43,8 @@ export const ENTITIES: Record<EntityName, EntityConfig> = {
     money: ['statementBalance', 'appBalance'],
     renames: { date: 'reconciled_on' },
   },
+  // Reference information only (no money fields). Last in the order, so a missing server table never blocks the rest.
+  bankDetails: { table: 'bank_account_details', money: [] },
 }
 
 export const ENTITY_ORDER = Object.keys(ENTITIES) as EntityName[]
