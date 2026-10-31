@@ -16,7 +16,7 @@ Without Supabase variables the app shows a setup screen and a clearly-labelled *
 ### Connect Supabase
 
 1. Create a project at supabase.com.
-2. Run `supabase/migrations/0001_schema.sql` → `0005_smart_safe_to_spend.sql` in order (SQL editor or `supabase db push`).
+2. Run `supabase/migrations/0001_schema.sql` → `0008_fix_sync_generated_columns.sql` in order (SQL editor or `supabase db push`).
 3. `cp .env.example .env.local` and set `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY`.
 4. In Auth settings add your site URL (local + deployed) as a redirect URL.
 5. `npm run dev`, create an account, sign in.

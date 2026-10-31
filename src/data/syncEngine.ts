@@ -71,7 +71,23 @@ export async function refreshCounts(db: MonvexDB): Promise<void> {
 /* -------------------------------------------------------------- sync */
 
 let running = false
+let paused = false
 const PAGE = 500
+
+/** Stop syncing and wait for a running sync to finish (used before erasing everything). */
+export async function pauseSync(): Promise<void> {
+  paused = true
+  const until = Date.now() + 20_000
+  while (running && Date.now() < until) await new Promise((r) => setTimeout(r, 100))
+  if (running) {
+    paused = false
+    throw new Error('A sync is still running. Please wait a few seconds and try again.')
+  }
+}
+
+export function resumeSync(): void {
+  paused = false
+}
 
 function isNetworkError(message: string): boolean {
   return /fetch|network|failed to|load failed|timeout|offline/i.test(message)
@@ -79,7 +95,7 @@ function isNetworkError(message: string): boolean {
 
 /** Push queued changes, then pull server changes. Never reports success unless the server confirmed. */
 export async function syncNow(db: MonvexDB, client: SupabaseClient): Promise<void> {
-  if (running) return
+  if (running || paused) return
   if (!navigator.onLine) {
     setState({ online: false })
     await refreshCounts(db)

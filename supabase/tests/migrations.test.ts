@@ -190,6 +190,22 @@ describe('Supabase migrations', () => {
     expect(audited.rows[0].n).toBe(0)
   })
 
+  it('syncs tables that have generated columns (balance reconciliations)', async () => {
+    const acc = '55555555-5555-5555-5555-555555555555'
+    const rid = '66666666-6666-6666-6666-666666666666'
+    await as(A, async () => {
+      await db.query(`select public.sync_apply(gen_random_uuid(), 'finance_accounts', 'upsert', $1, null, $2::jsonb)`, [acc, JSON.stringify({ id: acc, name: 'Recon', type: 'cash', currency: 'LKR', opening_balance: '0', archived: false })])
+      const rec = { id: rid, account_id: acc, statement_balance: '1000.000', app_balance: '900.000', currency: 'LKR', reconciled_on: '2026-10-01', notes: null, deleted_at: null }
+      const r = await db.query<{ r: { status: string } }>(`select public.sync_apply(gen_random_uuid(), 'balance_reconciliations', 'upsert', $1, null, $2::jsonb) as r`, [rid, JSON.stringify(rec)])
+      expect(r.rows[0].r.status).toBe('applied')
+      const row = await db.query<{ difference: string }>(`select difference from public.balance_reconciliations where id = $1`, [rid])
+      expect(Number(row.rows[0].difference)).toBe(100)
+      // editing it works too, and the database keeps computing the difference
+      const upd = await db.query<{ r: { status: string } }>(`select public.sync_apply(gen_random_uuid(), 'balance_reconciliations', 'upsert', $1, null, $2::jsonb) as r`, [rid, JSON.stringify({ ...rec, statement_balance: '950.000' })])
+      expect(['applied', 'duplicate']).toContain(upd.rows[0].r.status)
+    })
+  })
+
   it('keeps the audit log read-only for users', async () => {
     await as(A, async () => {
       const rows = await db.query('select * from public.audit_log')

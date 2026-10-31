@@ -55,6 +55,18 @@ Run `0005` in the SQL editor **before** using the new fields: `sync_apply` ignor
 
 Run `0006` **before** adding bank details: until the table exists the push fails (and is retried) and sync of the other tables still works.
 
+## Start fresh (migration `0007`) and the reconciliation sync fix (`0008`)
+
+`erase_my_data('ERASE ALL MY DATA')` lets a signed-in user permanently erase **all of their own** records in one call (Settings → Your data → *Start fresh*).
+
+- Only rows with `user_id = auth.uid()` are touched; the exact confirmation phrase is required, so a stray call erases nothing. Signed-out visitors cannot call it.
+- Child tables are deleted before parents (composite foreign keys), then the audit log. The audit log is erased too, otherwise it would keep a copy of every erased record.
+- Kept: the login, profile, currency and theme. Salary/payday and Safe-to-Spend settings return to their starting values.
+- `sync_ops_applied` is kept (operation ids only), so an old offline change from another device can never bring an erased record back.
+- Vault files live in Storage, so the app removes them with the Storage API **before** calling the function; this device's local copy is deleted after it succeeds.
+
+`0008` fixes `sync_apply`: it inserted with `select *`, which also tries to write generated columns, so balance reconciliations (`difference` is generated) could never be saved on the server. It now lists only writable columns.
+
 ### How the flexible pool is calculated (`src/domain/safeToSpend.ts`)
 
 ```

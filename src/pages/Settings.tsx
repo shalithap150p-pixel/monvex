@@ -2,6 +2,7 @@ import { Download, LogOut, Moon, RefreshCw, RotateCcw, Sun, Trash2 } from 'lucid
 import { useEffect, useState, type FormEvent } from 'react'
 import { useApp } from '../app/AppContext'
 import { useAuth } from '../app/auth'
+import { StartFresh } from '../app/StartFresh'
 import { ALL_ENTITIES } from '../data/assemble'
 import { deleteDb, tableOf } from '../data/db'
 import { supabaseConfigured } from '../data/supabase'
@@ -345,7 +346,10 @@ function DataSection() {
         {mode === 'demo' ? (
           <button type="button" className="btn btn-secondary" onClick={() => ask({ title: 'Reset demo data?', message: 'All demo changes are removed and the sample data is restored.', confirmLabel: 'Reset demo', danger: false, success: 'Demo reset.', run: resetDemo })}><RotateCcw className="size-4" aria-hidden /> Reset demo data</button>
         ) : (
-          <button type="button" className="btn btn-secondary text-negative" onClick={clearLocal}><Trash2 className="size-4" aria-hidden /> Clear data on this device</button>
+          <>
+            <button type="button" className="btn btn-secondary text-negative" onClick={clearLocal}><Trash2 className="size-4" aria-hidden /> Clear data on this device</button>
+            <StartFresh onExport={exportJson} />
+          </>
         )}
       </div>
       {dialog}
