@@ -85,6 +85,13 @@ describe('startFresh', () => {
     expect(await db.queue.count()).toBe(1)
   })
 
+  it('shows the real server error instead of blaming a missing update', async () => {
+    const db = await localDb('fresh-4b')
+    const { client } = fakeClient({ rpcError: 'relation "public.bank_account_details" does not exist' })
+    await expect(startFresh({ client, db, scope: 'fresh-4b', userId: USER, phrase: ERASE_PHRASE })).rejects.toThrow(/bank_account_details/)
+    expect(await db.accounts.count()).toBe(1)
+  })
+
   it('does not erase the database if the stored files could not be removed', async () => {
     const db = await localDb('fresh-5')
     const { client, calls } = fakeClient({ rows: [`${USER}/a.pdf`], removeError: 'storage unavailable' })

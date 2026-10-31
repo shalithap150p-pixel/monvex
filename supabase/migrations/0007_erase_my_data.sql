@@ -52,6 +52,12 @@ begin
    where user_id = v_uid;
 
   foreach t in array v_tables loop
+    -- A table from a later migration (for example bank_account_details, 0006) may not exist yet on this
+    -- database; skip it instead of failing, so this function works whichever migrations have been run.
+    if to_regclass(format('public.%I', t)) is null then
+      v_counts := v_counts || jsonb_build_object(t, 0);
+      continue;
+    end if;
     execute format('delete from public.%I where user_id = $1', t) using v_uid;
     get diagnostics n = row_count;
     v_counts := v_counts || jsonb_build_object(t, n);

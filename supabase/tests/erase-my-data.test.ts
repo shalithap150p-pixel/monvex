@@ -163,4 +163,22 @@ describe('erase_my_data ("Start fresh")', () => {
       await db.query(`select public.erase_my_data('${PHRASE}')`) // nothing left: still fine
     })
   })
+
+  it('still works when a later migration (bank details, 0006) has not been run', async () => {
+    const old = new PGlite()
+    await old.exec(readFileSync(join(root, 'tests/stubs.sql'), 'utf8'))
+    for (const f of readdirSync(join(root, 'migrations')).sort()) {
+      if (f.startsWith('0006')) continue
+      await old.exec(readFileSync(join(root, 'migrations', f), 'utf8'))
+    }
+    await old.exec(`insert into auth.users (id, email) values ('${A}', 'a@example.com')`)
+    await old.exec(`insert into public.finance_accounts (user_id, name, type, opening_balance) values ('${A}', 'Cash', 'cash', 100)`)
+    await old.exec(`set role authenticated`)
+    await old.exec(`select set_config('request.jwt.claim.sub', '${A}', false)`)
+    const r = await old.query<{ r: Record<string, number> }>(`select public.erase_my_data('${PHRASE}') as r`)
+    expect(r.rows[0].r.finance_accounts).toBe(1)
+    expect(r.rows[0].r.bank_account_details).toBe(0)
+    await old.exec('reset role')
+    expect((await old.query('select * from public.finance_accounts')).rows).toHaveLength(0)
+  })
 })

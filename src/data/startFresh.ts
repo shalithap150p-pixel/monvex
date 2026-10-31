@@ -8,7 +8,8 @@ export const ERASE_PHRASE = 'ERASE ALL MY DATA'
 const BUCKET = 'evidence'
 const BATCH = 100
 
-const MISSING_FUNCTION = /could not find the function|does not exist|schema cache/i
+// Only the function itself being unknown means 0007 has not been run. Any other error is shown as it is.
+const MISSING_FUNCTION = /could not find the function[^]*erase_my_data|function[^]*erase_my_data[^]*does not exist/i
 
 /** Every file this user has stored in the vault (database rows plus any leftover files in their folder). */
 async function evidencePaths(client: SupabaseClient, userId: string): Promise<string[]> {
