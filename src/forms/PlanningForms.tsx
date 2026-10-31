@@ -3,7 +3,7 @@ import { useApp } from '../app/AppContext'
 import type { AccountRec, AdvanceRec, BudgetRec, GoalRec, ObligationRec } from '../data/records'
 import { isValidDate, monthKey } from '../domain/dates'
 import { formatMoney, toDecimalString } from '../domain/money'
-import type { AccountType, AdvanceKind, Frequency } from '../domain/types'
+import type { AccountType, AdvanceKind, Frequency, GoalPriority } from '../domain/types'
 import { AccountSelector } from '../ui/Inputs'
 import { AmountField, CheckboxField, InlineNote, SelectField, TextAreaField, TextField } from '../ui/Primitives'
 import { FormModal, NeedAccountNote, activeAccounts, currencyOf, parseField, useFormSubmit } from './shared'
@@ -130,8 +130,10 @@ function BillInner({ onClose, initial }: { onClose: () => void; initial?: Obliga
   const [endDate, setEndDate] = useState(initial?.endDate ?? '')
   const [reminder, setReminder] = useState(String(initial?.reminderDays ?? 3))
   const [essential, setEssential] = useState(initial?.essential ?? true)
+  const [categoryId, setCategoryId] = useState(initial?.categoryId ?? '')
   const [notes, setNotes] = useState(initial?.notes ?? '')
   const [errors, setErrors] = useState<Record<string, string>>({})
+  const expenseCategories = data.categories.filter((c) => c.type === 'expense')
 
   const submit = () => {
     const a = parseField(amount, cur)
@@ -156,6 +158,7 @@ function BillInner({ onClose, initial }: { onClose: () => void; initial?: Obliga
           dueDate,
           endDate: endDate || null,
           accountId: accountId || null,
+          categoryId: categoryId || null,
           reminderDays: r,
           essential,
           active: initial?.active ?? true,
@@ -182,6 +185,14 @@ function BillInner({ onClose, initial }: { onClose: () => void; initial?: Obliga
         <TextField label="Ends on (optional)" type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} error={errors.endDate} disabled={frequency === 'once'} />
       </div>
       <AccountSelector label="Pay from (optional)" value={accountId} onChange={setAccountId} accounts={accounts} allowEmpty emptyLabel="Not decided" />
+      <SelectField label="Category (optional)" value={categoryId} onChange={(e) => setCategoryId(e.target.value)} helper="If this category has a monthly budget, the bill counts inside that budget, so the same money is never reserved twice.">
+        <option value="">No category</option>
+        {expenseCategories.map((c) => (
+          <option key={c.id} value={c.id}>
+            {c.name}
+          </option>
+        ))}
+      </SelectField>
       <TextField label="Remind me (days before)" type="number" min={0} max={90} value={reminder} onChange={(e) => setReminder(e.target.value)} error={errors.reminder} />
       <CheckboxField label="Essential" checked={essential} onChange={(e) => setEssential(e.target.checked)} helper="Essential bills are listed first in Safe-to-Spend." />
       <TextAreaField label="Notes (optional)" value={notes} onChange={(e) => setNotes(e.target.value)} />
@@ -313,6 +324,7 @@ function BudgetInner({ onClose, initial }: { onClose: () => void; initial?: Budg
   const [categoryId, setCategoryId] = useState(initial?.categoryId ?? options[0]?.id ?? '')
   const [limit, setLimit] = useState(initial ? toDecimalString(initial.limit, currency) : '')
   const [threshold, setThreshold] = useState(String(initial?.alertThresholdPct ?? 80))
+  const [essential, setEssential] = useState(initial?.essential ?? false)
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   const submit = () => {
@@ -325,7 +337,7 @@ function BudgetInner({ onClose, initial }: { onClose: () => void; initial?: Budg
     setErrors(e)
     if (Object.keys(e).length || l === null) return
     void run(
-      () => save('budgets', { id: initial?.id ?? id, categoryId, period: 'monthly', limit: l, currency, alertThresholdPct: t }).then(() => undefined),
+      () => save('budgets', { id: initial?.id ?? id, categoryId, period: 'monthly', limit: l, currency, alertThresholdPct: t, essential }).then(() => undefined),
       'Budget saved.',
       onClose,
     )
@@ -342,6 +354,7 @@ function BudgetInner({ onClose, initial }: { onClose: () => void; initial?: Budg
       </SelectField>
       <AmountField label="Monthly limit" value={limit} onChange={setLimit} currency={currency} error={errors.limit} />
       <TextField label="Alert at (% of limit)" type="number" min={1} max={100} value={threshold} onChange={(e) => setThreshold(e.target.value)} error={errors.threshold} />
+      <CheckboxField label="Essential spending" checked={essential} onChange={(e) => setEssential(e.target.checked)} helper="Food, transport and similar. An essential budget covers part of your daily essentials amount, so it is not reserved twice." />
     </FormModal>
   )
 }
@@ -359,19 +372,34 @@ function GoalInner({ onClose, initial }: { onClose: () => void; initial?: GoalRe
   const [targetDate, setTargetDate] = useState(initial?.targetDate ?? '')
   const [accountId, setAccountId] = useState(initial?.accountId ?? '')
   const [reserve, setReserve] = useState(initial?.reserveInSafeToSpend ?? false)
+  const [priority, setPriority] = useState<GoalPriority>(initial?.priority ?? 'medium')
+  const [monthly, setMonthly] = useState(initial?.monthlyContribution ? toDecimalString(initial.monthlyContribution, currency) : '')
   const [errors, setErrors] = useState<Record<string, string>>({})
 
   const submit = () => {
     const t = parseField(target, currency)
+    const m = monthly.trim() ? parseField(monthly, currency) : 0
     const e: Record<string, string> = {}
     if (!name.trim()) e.name = 'Name this goal.'
     if (t === null || t <= 0) e.target = 'Enter a target greater than zero.'
     if (targetDate && !isValidDate(targetDate)) e.targetDate = 'Enter a valid date.'
+    if (m === null || m < 0) e.monthly = 'Enter a valid amount or leave it empty.'
     setErrors(e)
-    if (Object.keys(e).length || t === null) return
+    if (Object.keys(e).length || t === null || m === null) return
     void run(
       () =>
-        save('goals', { id: initial?.id ?? id, name: name.trim(), target: t, currency, targetDate: targetDate || null, accountId: accountId || null, reserveInSafeToSpend: reserve }).then(() => undefined),
+        save('goals', {
+          id: initial?.id ?? id,
+          name: name.trim(),
+          target: t,
+          currency,
+          targetDate: targetDate || null,
+          accountId: accountId || null,
+          // An approved monthly amount only makes sense as a reserved amount.
+          reserveInSafeToSpend: reserve || m > 0,
+          priority,
+          monthlyContribution: m,
+        }).then(() => undefined),
       'Goal saved.',
       onClose,
     )
@@ -381,21 +409,27 @@ function GoalInner({ onClose, initial }: { onClose: () => void; initial?: GoalRe
       <TextField label="Goal name" value={name} onChange={(e) => setName(e.target.value)} error={errors.name} />
       <AmountField label="Target amount" value={target} onChange={setTarget} currency={currency} error={errors.target} />
       <TextField label="Target date (optional)" type="date" value={targetDate} onChange={(e) => setTargetDate(e.target.value)} error={errors.targetDate} />
+      <SelectField label="Priority" value={priority} onChange={(e) => setPriority(e.target.value as GoalPriority)} helper="Higher priority goals get a larger share of the suggested monthly savings.">
+        <option value="high">High</option>
+        <option value="medium">Medium</option>
+        <option value="low">Low</option>
+      </SelectField>
+      <AmountField label="Approved monthly savings (optional)" value={monthly} onChange={setMonthly} currency={currency} error={errors.monthly} helper="Set aside in Safe-to-Spend every month. MONVEX never moves money. Leave empty to use the suggestion on the Budgets page." />
       <AccountSelector label="Held in account (optional)" value={accountId} onChange={setAccountId} accounts={data.ledger.accounts} allowEmpty emptyLabel="Not assigned" />
       <CheckboxField label="Reserve this goal in Safe-to-Spend" checked={reserve} onChange={(e) => setReserve(e.target.checked)} helper="When on, the allocated amount is set aside and not offered as spendable money." />
     </FormModal>
   )
 }
 
-export function AllocationForm({ open, onClose, goal }: { open: boolean; onClose: () => void; goal: GoalRec | null }) {
+export function AllocationForm({ open, onClose, goal, defaultAmount }: { open: boolean; onClose: () => void; goal: GoalRec | null; defaultAmount?: number }) {
   if (!open || !goal) return null
-  return <AllocInner onClose={onClose} goal={goal} />
+  return <AllocInner onClose={onClose} goal={goal} defaultAmount={defaultAmount} />
 }
 
-function AllocInner({ onClose, goal }: { onClose: () => void; goal: GoalRec }) {
+function AllocInner({ onClose, goal, defaultAmount }: { onClose: () => void; goal: GoalRec; defaultAmount?: number }) {
   const { today, currency, save } = useApp()
   const { busy, error, run, id } = useFormSubmit()
-  const [amount, setAmount] = useState('')
+  const [amount, setAmount] = useState(defaultAmount ? toDecimalString(defaultAmount, currency) : '')
   const [date, setDate] = useState(today)
   const [note, setNote] = useState('')
   const [err, setErr] = useState('')

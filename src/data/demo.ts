@@ -72,17 +72,21 @@ export async function seedDemoData(db: MonvexDB, today: ISODate): Promise<void> 
   const rent = newId()
   const internet = newId()
   const insurance = newId()
-  await put('obligations', { id: rent, name: 'House rent', amount: 25_000_00, isEstimate: false, currency: 'LKR', frequency: 'monthly', dueDate: addDays(today, 6), accountId: bank, reminderDays: 5, essential: true, active: true })
-  await put('obligations', { id: internet, name: 'Home internet', amount: 4_500_00, isEstimate: false, currency: 'LKR', frequency: 'monthly', dueDate: addDays(today, 3), accountId: bank, reminderDays: 3, essential: true, active: true })
+  await put('obligations', { id: rent, name: 'House rent', amount: 25_000_00, isEstimate: false, currency: 'LKR', frequency: 'monthly', dueDate: addDays(today, 6), accountId: bank, categoryId: cat('Rent'), reminderDays: 5, essential: true, active: true })
+  await put('obligations', { id: internet, name: 'Home internet', amount: 4_500_00, isEstimate: false, currency: 'LKR', frequency: 'monthly', dueDate: addDays(today, 3), accountId: bank, categoryId: cat('Utilities'), reminderDays: 3, essential: true, active: true })
   await put('obligations', { id: insurance, name: 'Insurance premium', amount: 9_000_00, isEstimate: true, currency: 'LKR', frequency: 'quarterly', dueDate: addDays(today, 20), accountId: bank, reminderDays: 7, essential: false, active: true })
 
   await put('loans', { id: newId(), borrower: 'Kasun (friend)', accountId: cash, principal: 15_000_00, currency: 'LKR', lentDate: addDays(today, -20), dueDate: addDays(today, 10), writtenOff: 0 })
   await put('debts', { id: newId(), creditor: 'Family loan', accountId: bank, principal: 20_000_00, currency: 'LKR', borrowedDate: addDays(today, -40), dueDate: addDays(today, 25) })
   await put('passThroughs', { id: newId(), accountId: cash, sender: 'Aunt Malani', recipient: 'Nimal (bank transfer)', destination: 'Nimal – Sampath Bank', amount: 10_000_00, currency: 'LKR', receivedDate: addDays(today, -1), status: 'received' })
 
-  await put('budgets', { id: newId(), categoryId: cat('Food & Dining'), period: 'monthly', limit: 15_000_00, currency: 'LKR', alertThresholdPct: 80 })
+  await put('budgets', { id: newId(), categoryId: cat('Food & Dining'), period: 'monthly', limit: 15_000_00, currency: 'LKR', alertThresholdPct: 80, essential: true })
+  await put('budgets', { id: newId(), categoryId: cat('Transport'), period: 'monthly', limit: 5_000_00, currency: 'LKR', alertThresholdPct: 80, essential: true })
+  await put('budgets', { id: newId(), categoryId: cat('Shopping'), period: 'monthly', limit: 6_000_00, currency: 'LKR', alertThresholdPct: 80 })
   const goal = newId()
-  await put('goals', { id: goal, name: 'Emergency fund', target: 150_000_00, currency: 'LKR', targetDate: addMonths(today, 10), accountId: bank, reserveInSafeToSpend: true })
+  await put('goals', { id: goal, name: 'Emergency fund', target: 150_000_00, currency: 'LKR', targetDate: addMonths(today, 10), accountId: bank, reserveInSafeToSpend: true, priority: 'high', monthlyContribution: 0 })
+  await put('goals', { id: newId(), name: 'New laptop', target: 120_000_00, currency: 'LKR', targetDate: addMonths(today, 8), accountId: bank, reserveInSafeToSpend: true, priority: 'medium', monthlyContribution: 0 })
+  await put('goals', { id: newId(), name: 'Weekend trip', target: 40_000_00, currency: 'LKR', targetDate: null, accountId: bank, reserveInSafeToSpend: true, priority: 'low', monthlyContribution: 0 })
   await put('allocations', { id: newId(), goalId: goal, accountId: bank, amount: 10_000_00, currency: 'LKR', date: addDays(today, -10), note: 'First deposit' })
 
   await savePrefs(db, {

@@ -1,8 +1,9 @@
 import { useMemo } from 'react'
 import { billEvents, debtEvents, passThroughEvents, receivableEvents, runForecast, salaryEvent, type ForecastEvent, type ForecastResult, type Scenario } from '../domain/forecast'
 import { accountBalances, availableMoney, buildMovements, passThroughUnresolved, type AvailableMoney, type Movement } from '../domain/ledger'
-import { addDays, monthKey } from '../domain/dates'
-import { computeSafeToSpend, type SafeToSpendResult } from '../domain/safeToSpend'
+import { monthKey } from '../domain/dates'
+import type { SafeToSpendResult } from '../domain/safeToSpend'
+import { computeSmartFinance, type SmartFinance } from '../domain/smartFinance'
 import { monthlySavings, projectedClosingBalance, type ClosingBalanceBreakdown, type SavingsBreakdown } from '../domain/savings'
 import { nextPayday, projectPayday, type PaydayProjection } from '../domain/salary'
 import type { ISODate } from '../domain/dates'
@@ -15,7 +16,10 @@ export interface Derived {
   events: ForecastEvent[]
   payday: ISODate | null
   paydayProjection: PaydayProjection | null
+  /** Flexible-pool engine result for right now (same numbers as smart.daily.now). */
   safe: SafeToSpendResult
+  /** Daily allowance, budgets, savings plan, spending history and insights. */
+  smart: SmartFinance
   savings: SavingsBreakdown
   closing: ClosingBalanceBreakdown
   forecast: (days: 30 | 60 | 90, scenario?: Scenario) => ForecastResult
@@ -52,20 +56,20 @@ export function useDerived(): Derived {
     })
     if (sal) events.push(sal)
 
-    const periodEnd = payday ?? addDays(today, prefs.safeToSpendPeriodDays)
-    const safe = computeSafeToSpend({
+    const smart = computeSmartFinance({
       today,
-      availableFunds: money.available,
-      periodEnd,
+      ledger,
+      prefs,
       obligations,
       occurrences,
+      budgets: data.budgets,
       goals,
-      essentialDailyAmount: prefs.essentialDailyAmount,
-      safetyBuffer: prefs.safetyBuffer,
-      carryForward: prefs.carryForwardAllowance,
-      hasPayday: Boolean(payday),
-      hasAnyAccount: activeAccounts.length > 0,
+      categories: data.categories,
+      payday,
+      movements,
+      availableFunds: money.available,
     })
+    const safe = smart.daily.now
 
     const month = monthKey(today)
     const savings = monthlySavings(movements, events, month, today)
@@ -73,6 +77,6 @@ export function useDerived(): Derived {
     const forecast = (days: 30 | 60 | 90, scenario: Scenario = 'expected') =>
       runForecast({ today, horizonDays: days, accounts: activeAccounts, balances, events, scenario })
 
-    return { movements, money, balances, events, payday, paydayProjection, safe, savings, closing, forecast }
+    return { movements, money, balances, events, payday, paydayProjection, safe, smart, savings, closing, forecast }
   }, [data, today])
 }

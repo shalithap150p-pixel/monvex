@@ -32,7 +32,11 @@ export const ENTITIES: Record<EntityName, EntityConfig> = {
   advances: { table: 'salary_advances', money: ['amount'], renames: { date: 'advance_date' } },
   payrollDeductions: { table: 'payroll_deductions', money: ['amount'] },
   budgets: { table: 'budgets', money: ['limit'], renames: { limit: 'limit_amount' } },
-  goals: { table: 'savings_goals', money: ['target'], renames: { target: 'target_amount' } },
+  goals: {
+    table: 'savings_goals',
+    money: ['target', 'monthlyContribution'],
+    renames: { target: 'target_amount' },
+  },
   allocations: { table: 'savings_allocations', money: ['amount'], renames: { date: 'allocated_on' } },
   reconciliations: {
     table: 'balance_reconciliations',

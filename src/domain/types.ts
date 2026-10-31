@@ -173,6 +173,8 @@ export interface PaymentObligation extends BaseRecord {
   dueDate: ISODate // first due date (anchor)
   endDate?: ISODate | null
   accountId?: string | null
+  /** Optional expense category. When that category has a budget, the bill counts inside the budget. */
+  categoryId?: string | null
   reminderDays: number
   essential: boolean
   active: boolean
@@ -201,6 +203,15 @@ export interface Budget extends BaseRecord {
   period: 'monthly'
   limit: Minor
   alertThresholdPct: number
+  /** Essential spending (food, transport…): covers part of the "essentials per day" reserve. */
+  essential?: boolean
+}
+
+export type GoalPriority = 'high' | 'medium' | 'low'
+
+export interface GoalContribution {
+  date: ISODate
+  amount: Minor
 }
 
 export interface SavingsGoal extends BaseRecord {
@@ -212,6 +223,15 @@ export interface SavingsGoal extends BaseRecord {
   accountId?: string | null
   /** Only reserved goals reduce Safe-to-Spend. */
   reserveInSafeToSpend: boolean
+  /** Higher priority goals get a larger share of the recommended savings. Missing = medium. */
+  priority?: GoalPriority
+  /**
+   * Monthly contribution the user has APPROVED. 0 / missing = none.
+   * Approved contributions are reserved in Safe-to-Spend; MONVEX never moves the money.
+   */
+  monthlyContribution?: Minor
+  /** Dated allocations (the data behind `allocated`). */
+  contributions?: GoalContribution[]
 }
 
 export interface UserPreferences {

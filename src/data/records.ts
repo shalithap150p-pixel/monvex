@@ -87,7 +87,7 @@ export type AdvanceRec = SalaryAdvance & Synced
 export type ObligationRec = PaymentObligation & Synced
 export type OccurrenceRec = Omit<PaymentOccurrence, 'paidAmount' | 'paidTransactionIds'> & Synced & { currency: string }
 export type BudgetRec = Budget & Synced
-export type GoalRec = Omit<SavingsGoal, 'allocated'> & Synced
+export type GoalRec = Omit<SavingsGoal, 'allocated' | 'contributions'> & Synced
 
 export interface EntityMap {
   accounts: AccountRec

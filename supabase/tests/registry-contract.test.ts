@@ -20,7 +20,7 @@ const D = '2026-03-05'
 const SAMPLES: Record<EntityName, Record<string, unknown>> = {
   accounts: { id: ID, name: 'Cash', type: 'cash', currency: 'LKR', openingBalance: 123456, confirmedBalance: 100, lastReconciledAt: D, archived: false },
   categories: { id: ID, name: 'Food', type: 'expense' },
-  obligations: { id: ID, name: 'Rent', amount: 2500000, isEstimate: false, currency: 'LKR', frequency: 'monthly', dueDate: D, endDate: null, accountId: ID, reminderDays: 3, essential: true, active: true, notes: null },
+  obligations: { id: ID, name: 'Rent', amount: 2500000, isEstimate: false, currency: 'LKR', frequency: 'monthly', dueDate: D, endDate: null, accountId: ID, reminderDays: 3, essential: true, active: true, notes: null, categoryId: ID },
   occurrences: { id: ID, obligationId: ID, dueDate: D, expectedAmount: 2500000, currency: 'LKR' },
   transactions: { id: ID, type: 'expense', accountId: ID, amount: 150050, currency: 'LKR', date: D, time: '09:30', categoryId: ID, description: 'Lunch', counterparty: null, reference: null, notes: null, status: 'posted', occurrenceId: null },
   transfers: { id: ID, sourceAccountId: ID, destinationAccountId: ID, amount: 5000, fee: 100, date: D, reference: null, notes: null, currency: 'LKR' },
@@ -32,8 +32,8 @@ const SAMPLES: Record<EntityName, Record<string, unknown>> = {
   debtRepayments: { id: ID, debtId: ID, accountId: ID, principalPart: 4000, interestPart: 100, date: D, reference: null, currency: 'LKR' },
   advances: { id: ID, employer: 'Co', kind: 'advance', accountId: ID, amount: 5000000, currency: 'LKR', date: D, status: 'received', schedule: [{ month: '2026-04', amount: 5000000 }], payrollMonth: null, notes: null },
   payrollDeductions: { id: ID, transactionId: ID, advanceId: ID, amount: 5000000, currency: 'LKR' },
-  budgets: { id: ID, currency: 'LKR', categoryId: ID, period: 'monthly', limit: 3000000, alertThresholdPct: 80 },
-  goals: { id: ID, currency: 'LKR', name: 'Trip', target: 10000000, targetDate: null, accountId: null, reserveInSafeToSpend: false },
+  budgets: { id: ID, currency: 'LKR', categoryId: ID, period: 'monthly', limit: 3000000, alertThresholdPct: 80, essential: true },
+  goals: { id: ID, currency: 'LKR', name: 'Trip', target: 10000000, targetDate: null, accountId: null, reserveInSafeToSpend: false, priority: 'high', monthlyContribution: 400000 },
   allocations: { id: ID, goalId: ID, accountId: null, amount: 1000, date: D, note: null, currency: 'LKR' },
   reconciliations: { id: ID, accountId: ID, statementBalance: 1000, appBalance: 900, date: D, notes: null, currency: 'LKR' },
 }

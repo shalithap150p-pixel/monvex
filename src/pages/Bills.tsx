@@ -149,7 +149,7 @@ export default function Bills() {
       )}
 
       <BillForm open={form.open} onClose={() => setForm({ open: false })} initial={form.initial} />
-      <TransactionForm open={Boolean(paying)} onClose={() => setPaying(null)} defaultType="expense" occurrence={paying?.occ} occurrenceName={paying?.ob.name} defaultAccountId={paying?.ob.accountId} />
+      <TransactionForm open={Boolean(paying)} onClose={() => setPaying(null)} defaultType="expense" occurrence={paying?.occ} occurrenceName={paying?.ob.name} defaultAccountId={paying?.ob.accountId} defaultCategoryId={paying?.ob.categoryId} />
       {dialog}
     </>
   )

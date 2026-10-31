@@ -1,31 +1,20 @@
 import { PiggyBank, Plus, Target } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { useApp } from '../app/AppContext'
+import { useDerived } from '../app/derived'
 import { useLookups } from '../app/FinanceCards'
+import { SavingsPlanCard } from '../app/SavingsPlanCard'
 import { AllocationForm, BudgetForm, GoalForm } from '../forms/PlanningForms'
 import type { BudgetRec, GoalRec } from '../data/records'
 import { monthKey } from '../domain/dates'
 import { formatMoney, sum } from '../domain/money'
 import type { Budget, SavingsGoal } from '../domain/types'
 import { DeleteButton, EditButton, useConfirm } from '../ui/Confirm'
+import { Meter } from '../ui/Meter'
 import { CurrencyAmount, PageHeader, StatusBadge } from '../ui/Primitives'
 import { EmptyState } from '../ui/States'
 
-function Progress({ pct, label, tone }: { pct: number; label: string; tone: 'ok' | 'warn' | 'over' }) {
-  const color = tone === 'over' ? 'var(--negative)' : tone === 'warn' ? 'var(--warning)' : 'var(--accent)'
-  return (
-    <div
-      role="progressbar"
-      aria-label={label}
-      aria-valuemin={0}
-      aria-valuemax={100}
-      aria-valuenow={Math.min(100, Math.round(pct))}
-      className="h-2.5 overflow-hidden rounded-full bg-surface-2"
-    >
-      <div className="h-full rounded-full" style={{ width: `${Math.min(100, Math.max(pct > 0 ? 2 : 0, pct))}%`, background: color }} />
-    </div>
-  )
-}
+const Progress = ({ pct, label, tone }: { pct: number; label: string; tone: 'ok' | 'warn' | 'over' }) => <Meter pct={pct} label={label} tone={tone} />
 
 export default function Budgets() {
   const { data, db, today, currency, remove } = useApp()
@@ -36,14 +25,10 @@ export default function Budgets() {
   const [alloc, setAlloc] = useState<GoalRec | null>(null)
 
   const month = monthKey(today)
-  const spentBy = useMemo(() => {
-    const m = new Map<string, number>()
-    for (const t of data.ledger.transactions) {
-      if (t.type !== 'expense' || t.status !== 'posted' || monthKey(t.date) !== month || !t.categoryId) continue
-      m.set(t.categoryId, (m.get(t.categoryId) ?? 0) + t.amount)
-    }
-    return m
-  }, [data.ledger.transactions, month])
+  const d = useDerived()
+  // Same spending as Safe-to-Spend uses, so the two can never disagree.
+  const spentBy = useMemo(() => new Map(d.smart.budgets.map((b) => [b.budget.categoryId, b.spent])), [d.smart.budgets])
+  const [release, setRelease] = useState<{ goal: GoalRec; amount: number } | null>(null)
 
   const budgetRec = async (b: Budget) => (await db.budgets.get(b.id)) as BudgetRec
   const goalRec = async (g: SavingsGoal) => (await db.goals.get(g.id)) as GoalRec
@@ -68,6 +53,8 @@ export default function Budgets() {
         }
       />
 
+      <SavingsPlanCard />
+
       <div className="grid gap-4 xl:grid-cols-2">
         <section className="card" aria-labelledby="bud-title">
           <div className="mb-3 flex items-start justify-between gap-2">
@@ -87,7 +74,7 @@ export default function Budgets() {
                 return (
                   <li key={b.id}>
                     <div className="mb-1.5 flex items-center justify-between gap-2">
-                      <span className="font-medium">{name}</span>
+                      <span className="font-medium">{name}{b.essential && <span className="t-helper"> · essential</span>}</span>
                       <span className="flex items-center gap-2">
                         {over ? <StatusBadge tone="negative" label={`Over by ${formatMoney(spent - b.limit, currency)}`} /> : warn ? <StatusBadge tone="warning" label="Close to limit" /> : <StatusBadge tone="positive" label="On track" />}
                         <EditButton label={`Edit ${name} budget`} onClick={async () => setBForm({ open: true, initial: await budgetRec(b) })} />
@@ -118,6 +105,8 @@ export default function Budgets() {
                     <div className="mb-1.5 flex items-center justify-between gap-2">
                       <span className="font-medium">{g.name}</span>
                       <span className="flex items-center gap-1">
+                        {g.allocated >= g.target && <StatusBadge tone="positive" label="Goal reached" />}
+                        {(g.monthlyContribution ?? 0) > 0 && <StatusBadge tone="positive" label={`${formatMoney(g.monthlyContribution ?? 0, currency)}/month`} />}
                         {g.reserveInSafeToSpend && <StatusBadge tone="info" label="Reserved" />}
                         <EditButton label={`Edit ${g.name}`} onClick={async () => setGForm({ open: true, initial: await goalRec(g) })} />
                         <DeleteButton label={`Delete ${g.name}`} onClick={() => ask({ title: `Delete “${g.name}”?`, message: 'The goal and its allocations are removed. Your account balances are not affected.', success: 'Goal deleted.', run: async () => {
@@ -129,9 +118,16 @@ export default function Budgets() {
                     <Progress pct={pct} tone="ok" label={`${g.name} progress`} />
                     <p className="t-helper mt-1">
                       <CurrencyAmount value={g.allocated} currency={g.currency ?? currency} tone="neutral" /> of <CurrencyAmount value={g.target} currency={g.currency ?? currency} tone="neutral" /> ({Math.round(pct)}%)
-                      {g.targetDate ? ` · target ${g.targetDate}` : ''}
+                      {g.targetDate ? ` · target ${g.targetDate}` : ''} · {(g.priority ?? 'medium')} priority
                     </p>
-                    <button type="button" className="btn btn-secondary btn-sm mt-2" onClick={async () => setAlloc(await goalRec(g))}>Add savings</button>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      <button type="button" className="btn btn-secondary btn-sm" onClick={async () => setAlloc(await goalRec(g))}>Add savings</button>
+                      {g.allocated >= g.target && g.allocated > 0 && (
+                        <button type="button" className="btn btn-ghost btn-sm" onClick={async () => setRelease({ goal: await goalRec(g), amount: -g.allocated })}>
+                          I spent this money — release it
+                        </button>
+                      )}
+                    </div>
                   </li>
                 )
               })}
@@ -143,6 +139,7 @@ export default function Budgets() {
       <BudgetForm open={bForm.open} onClose={() => setBForm({ open: false })} initial={bForm.initial} />
       <GoalForm open={gForm.open} onClose={() => setGForm({ open: false })} initial={gForm.initial} />
       <AllocationForm open={Boolean(alloc)} onClose={() => setAlloc(null)} goal={alloc} />
+      <AllocationForm open={Boolean(release)} onClose={() => setRelease(null)} goal={release?.goal ?? null} defaultAmount={release?.amount} />
       {dialog}
     </>
   )

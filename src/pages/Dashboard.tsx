@@ -3,7 +3,8 @@ import { useMemo, useState } from 'react'
 import { Link } from 'react-router-dom'
 import { useApp } from '../app/AppContext'
 import { useDerived } from '../app/derived'
-import { AccountBalanceCard, SafeToSpendCard, TransactionList } from '../app/FinanceCards'
+import { AccountBalanceCard, TransactionList } from '../app/FinanceCards'
+import { BudgetUtilizationCard, DailySafeToSpendCard, GoalProgressCard, InsightsCard, MoneyBreakdownCard, SpendingTrendCard } from '../app/SmartCards'
 import { QUICK, useQuickActions } from '../app/QuickActions'
 import { occurrenceStatus, remainingAmount } from '../domain/bills'
 import { diffDays } from '../domain/dates'
@@ -78,10 +79,12 @@ export default function Dashboard() {
     <>
       <PageHeader title="Dashboard" description="Where your money stands today." />
 
-      <div className="grid gap-4 lg:grid-cols-2 xl:grid-cols-3">
-        <AccountBalanceCard total={d.money.available} heldForOthers={d.money.heldForOthers} perAccount={d.money.perAccount} currency={currency} />
-        <SafeToSpendCard result={d.safe} currency={currency} />
-        <div className="lg:col-span-2 xl:col-span-1">
+      <div className="grid gap-4 lg:grid-cols-3">
+        <div className="lg:col-span-2">
+          <DailySafeToSpendCard daily={d.smart.daily} currency={currency} />
+        </div>
+        <div className="flex flex-col gap-4">
+          <AccountBalanceCard total={d.money.available} heldForOthers={d.money.heldForOthers} perAccount={d.money.perAccount} currency={currency} />
           <SummaryMetricCard
             label={`This month — net savings`}
             value={<CurrencyAmount value={d.savings.actual.net} currency={currency} signed withIcon />}
@@ -93,6 +96,21 @@ export default function Dashboard() {
             }
             badge={<StatusBadge tone="neutral" label="Actual" />}
           />
+        </div>
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-3">
+        <MoneyBreakdownCard daily={d.smart.daily} spentThisMonth={d.safe.buckets.spentThisMonth} currency={currency} />
+        <BudgetUtilizationCard budgets={d.smart.budgets} currency={currency} />
+        <GoalProgressCard smart={d.smart} goals={data.goals} currency={currency} />
+      </div>
+
+      <div className="grid gap-4 lg:grid-cols-5">
+        <div className="lg:col-span-3">
+          <SpendingTrendCard smart={d.smart} currency={currency} />
+        </div>
+        <div className="lg:col-span-2">
+          <InsightsCard insights={d.smart.insights} />
         </div>
       </div>
 

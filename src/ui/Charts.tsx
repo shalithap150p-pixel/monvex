@@ -1,4 +1,4 @@
-import { Area, AreaChart, CartesianGrid, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { Area, AreaChart, Bar, BarChart, CartesianGrid, ReferenceLine, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import type { DayPoint } from '../domain/forecast'
 import { formatMoney } from '../domain/money'
 
@@ -91,5 +91,51 @@ export function CategoryBreakdownChart({ items, currency }: { items: BreakdownIt
         )
       })}
     </ul>
+  )
+}
+
+/** Daily spending for the last days: everyday spending and bill payments, with today's allowance as a reference line. */
+export function DailySpendingChart({
+  days,
+  currency,
+  allowance,
+  summary,
+  height = 220,
+}: {
+  days: { date: string; everyday: number; bills: number }[]
+  currency: string
+  /** Today's recommended allowance (drawn as a reference line when above zero). */
+  allowance: number
+  summary: string
+  height?: number
+}) {
+  return (
+    <figure className="m-0">
+      <div role="img" aria-label={summary} style={{ height }}>
+        <ResponsiveContainer width="100%" height="100%">
+          <BarChart data={days} margin={{ top: 8, right: 8, left: 0, bottom: 0 }}>
+            <CartesianGrid stroke="var(--border)" strokeDasharray="3 3" vertical={false} />
+            <XAxis dataKey="date" tickFormatter={shortDate} stroke="var(--text-subtle)" tick={{ fontSize: 12 }} minTickGap={20} />
+            <YAxis tickFormatter={compact} stroke="var(--text-subtle)" tick={{ fontSize: 12 }} width={48} />
+            <Tooltip
+              cursor={{ fill: 'var(--surface-2)' }}
+              contentStyle={{ background: 'var(--surface-2)', border: '1px solid var(--border)', borderRadius: 10, color: 'var(--text)' }}
+              labelFormatter={(d) => String(d)}
+              formatter={(v, name) => [formatMoney(Number(v), currency), name === 'everyday' ? 'Everyday spending' : 'Bill payments']}
+            />
+            {allowance > 0 && (
+              <ReferenceLine y={allowance} stroke="var(--positive)" strokeDasharray="4 4" label={{ value: "Today's allowance", fill: 'var(--positive)', fontSize: 11, position: 'insideTopLeft' }} />
+            )}
+            <Bar dataKey="everyday" stackId="s" fill="var(--chart-1)" isAnimationActive={false} />
+            <Bar dataKey="bills" stackId="s" fill="var(--chart-6)" radius={[3, 3, 0, 0]} isAnimationActive={false} />
+          </BarChart>
+        </ResponsiveContainer>
+      </div>
+      <figcaption className="t-helper mt-2">
+        {summary}
+        <span className="ml-2 inline-flex items-center gap-1"><span className="inline-block size-2.5 rounded-sm" style={{ background: 'var(--chart-1)' }} aria-hidden /> Everyday</span>
+        <span className="ml-2 inline-flex items-center gap-1"><span className="inline-block size-2.5 rounded-sm" style={{ background: 'var(--chart-6)' }} aria-hidden /> Bills</span>
+      </figcaption>
+    </figure>
   )
 }

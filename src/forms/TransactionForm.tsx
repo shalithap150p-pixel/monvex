@@ -19,6 +19,8 @@ interface Props {
   occurrence?: PaymentOccurrence
   occurrenceName?: string
   defaultAccountId?: string | null
+  /** Category pre-selected when paying a bill (the bill's own category). */
+  defaultCategoryId?: string | null
 }
 
 export function TransactionForm(props: Props) {
@@ -26,7 +28,7 @@ export function TransactionForm(props: Props) {
   return <Inner {...props} />
 }
 
-function Inner({ onClose, initial, defaultType = 'expense', occurrence, occurrenceName, defaultAccountId }: Props) {
+function Inner({ onClose, initial, defaultType = 'expense', occurrence, occurrenceName, defaultAccountId, defaultCategoryId }: Props) {
   const { data, today, currency, save, remove, db } = useApp()
   const { busy, error, run, id: newId } = useFormSubmit()
   const accounts = data.ledger.accounts
@@ -40,7 +42,7 @@ function Inner({ onClose, initial, defaultType = 'expense', occurrence, occurren
     initial ? toDecimalString(initial.amount, initial.currency) : occurrence ? toDecimalString(remainingAmount(occurrence), cur) : '',
   )
   const [date, setDate] = useState(initial?.date ?? today)
-  const [categoryId, setCategoryId] = useState(initial?.categoryId ?? '')
+  const [categoryId, setCategoryId] = useState(initial?.categoryId ?? defaultCategoryId ?? '')
   const [description, setDescription] = useState(initial?.description ?? occurrenceName ?? '')
   const [counterparty, setCounterparty] = useState(initial?.counterparty ?? '')
   const [reference, setReference] = useState(initial?.reference ?? '')

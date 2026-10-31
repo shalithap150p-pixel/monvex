@@ -147,6 +147,7 @@ export function assemble(raw: { [K in EntityName]: EntityMap[K][] }, prefs: AppD
   const goals: SavingsGoal[] = alive(raw.goals).map((g) => ({
     ...g,
     allocated: sum((allocationsByGoal.get(g.id) ?? []).map((a) => a.amount)),
+    contributions: (allocationsByGoal.get(g.id) ?? []).map((a) => ({ date: a.date, amount: a.amount })),
   }))
 
   return {
